@@ -1,0 +1,156 @@
+--- Query 3 Optimized ---
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Hash Join  (cost=12.24..18.20 rows=19 width=1079) (actual time=0.177..0.208 rows=20 loops=1)
+   Hash Cond: (pd.patient_id = p.patient_id)
+   Buffers: shared hit=8
+   ->  Hash Join  (cost=9.89..15.81 rows=18 width=1064) (actual time=0.138..0.166 rows=20 loops=1)
+         Hash Cond: (pi.prescription_id = pr.prescription_id)
+         Buffers: shared hit=7
+         ->  Hash Join  (cost=1.07..6.63 rows=48 width=532) (actual time=0.031..0.056 rows=52 loops=1)
+               Hash Cond: (pi.drug_id = dr.drug_id)
+               Buffers: shared hit=3
+               ->  Seq Scan on prescription_items pi  (cost=0.00..4.39 rows=239 width=20) (actual time=0.002..0.011 rows=239 loops=1)
+                     Buffers: shared hit=2
+               ->  Hash  (cost=1.06..1.06 rows=1 width=520) (actual time=0.013..0.015 rows=1 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on drugs_directory dr  (cost=0.00..1.06 rows=1 width=520) (actual time=0.005..0.006 rows=1 loops=1)
+                           Filter: ((trade_name)::text = 'Эналаприл'::text)
+                           Rows Removed by Filter: 4
+                           Buffers: shared hit=1
+         ->  Hash  (cost=8.26..8.26 rows=45 width=564) (actual time=0.088..0.089 rows=43 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 13kB
+               Buffers: shared hit=4
+               ->  Hash Join  (cost=4.16..8.26 rows=45 width=564) (actual time=0.063..0.078 rows=43 loops=1)
+                     Hash Cond: (pr.patient_id = pd.patient_id)
+                     Buffers: shared hit=4
+                     ->  Seq Scan on prescriptions pr  (cost=0.00..3.20 rows=120 width=32) (actual time=0.006..0.011 rows=120 loops=1)
+                           Buffers: shared hit=2
+                     ->  Hash  (cost=3.86..3.86 rows=24 width=532) (actual time=0.040..0.041 rows=22 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                           Buffers: shared hit=2
+                           ->  Hash Join  (cost=1.07..3.86 rows=24 width=532) (actual time=0.022..0.034 rows=22 loops=1)
+                                 Hash Cond: (pd.diag_id = dd.diag_id)
+                                 Buffers: shared hit=2
+                                 ->  Seq Scan on patient_diagnoses pd  (cost=0.00..2.20 rows=120 width=20) (actual time=0.002..0.006 rows=120 loops=1)
+                                       Buffers: shared hit=1
+                                 ->  Hash  (cost=1.06..1.06 rows=1 width=520) (actual time=0.008..0.008 rows=1 loops=1)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       Buffers: shared hit=1
+                                       ->  Seq Scan on diagnoses_directory dd  (cost=0.00..1.06 rows=1 width=520) (actual time=0.002..0.003 rows=1 loops=1)
+                                             Filter: ((name)::text = 'Гипертония'::text)
+                                             Rows Removed by Filter: 4
+                                             Buffers: shared hit=1
+   ->  Hash  (cost=1.60..1.60 rows=60 width=63) (actual time=0.025..0.025 rows=60 loops=1)
+         Buckets: 1024  Batches: 1  Memory Usage: 14kB
+         Buffers: shared hit=1
+         ->  Seq Scan on patients p  (cost=0.00..1.60 rows=60 width=63) (actual time=0.006..0.009 rows=60 loops=1)
+               Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=524 read=5
+ Planning Time: 3.693 ms
+ Execution Time: 0.360 ms
+(50 rows)
+
+
+
+--- Query 5 Optimized ---
+                                                                           QUERY PLAN                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=86.83..86.88 rows=20 width=95) (actual time=1.372..1.375 rows=53 loops=1)
+   Sort Key: (round((((count(CASE WHEN ((il.status)::text = 'Skipped'::text) THEN 1 ELSE NULL::integer END))::numeric * 100.0) / (count(*))::numeric), 2)) DESC
+   Sort Method: quicksort  Memory: 29kB
+   Buffers: shared hit=23
+   ->  HashAggregate  (cost=85.40..86.40 rows=20 width=95) (actual time=1.310..1.330 rows=53 loops=1)
+         Group Key: p.patient_id
+         Filter: (count(*) > 0)
+         Batches: 1  Memory Usage: 32kB
+         Buffers: shared hit=20
+         ->  Hash Join  (cost=29.25..70.76 rows=1464 width=69) (actual time=0.229..1.067 rows=1464 loops=1)
+               Hash Cond: (pr.patient_id = p.patient_id)
+               Buffers: shared hit=20
+               ->  Hash Join  (cost=26.90..64.30 rows=1464 width=22) (actual time=0.195..0.851 rows=1464 loops=1)
+                     Hash Cond: (pi.prescription_id = pr.prescription_id)
+                     Buffers: shared hit=19
+                     ->  Hash Join  (cost=22.20..55.63 rows=1464 width=22) (actual time=0.154..0.615 rows=1464 loops=1)
+                           Hash Cond: (s.item_id = pi.item_id)
+                           Buffers: shared hit=17
+                           ->  Hash Join  (cost=14.82..44.34 rows=1464 width=10) (actual time=0.092..0.380 rows=1464 loops=1)
+                                 Hash Cond: (il.schedule_id = s.schedule_id)
+                                 Buffers: shared hit=15
+                                 ->  Seq Scan on intake_logs il  (cost=0.00..25.64 rows=1464 width=10) (actual time=0.001..0.077 rows=1464 loops=1)
+                                       Buffers: shared hit=11
+                                 ->  Hash  (cost=8.81..8.81 rows=481 width=8) (actual time=0.078..0.078 rows=481 loops=1)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 27kB
+                                       Buffers: shared hit=4
+                                       ->  Seq Scan on intake_schedules s  (cost=0.00..8.81 rows=481 width=8) (actual time=0.003..0.029 rows=481 loops=1)
+                                             Buffers: shared hit=4
+                           ->  Hash  (cost=4.39..4.39 rows=239 width=20) (actual time=0.045..0.045 rows=239 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                                 Buffers: shared hit=2
+                                 ->  Seq Scan on prescription_items pi  (cost=0.00..4.39 rows=239 width=20) (actual time=0.006..0.018 rows=239 loops=1)
+                                       Buffers: shared hit=2
+                     ->  Hash  (cost=3.20..3.20 rows=120 width=32) (actual time=0.029..0.029 rows=120 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 16kB
+                           Buffers: shared hit=2
+                           ->  Seq Scan on prescriptions pr  (cost=0.00..3.20 rows=120 width=32) (actual time=0.002..0.008 rows=120 loops=1)
+                                 Buffers: shared hit=2
+               ->  Hash  (cost=1.60..1.60 rows=60 width=63) (actual time=0.020..0.020 rows=60 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on patients p  (cost=0.00..1.60 rows=60 width=63) (actual time=0.004..0.007 rows=60 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=445 read=5
+ Planning Time: 2.729 ms
+ Execution Time: 1.572 ms
+(47 rows)
+
+
+
+--- Query 4 Optimized ---
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=22.54..22.55 rows=4 width=577) (actual time=0.118..0.119 rows=0 loops=1)
+   Sort Key: s.time_of_day
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=10
+   ->  Hash Join  (cost=11.85..22.50 rows=4 width=577) (actual time=0.076..0.077 rows=0 loops=1)
+         Hash Cond: (s.item_id = pi.item_id)
+         Buffers: shared hit=5
+         ->  Seq Scan on intake_schedules s  (cost=0.00..8.81 rows=481 width=12) (actual time=0.004..0.004 rows=1 loops=1)
+               Buffers: shared hit=1
+         ->  Hash  (cost=11.82..11.82 rows=2 width=573) (actual time=0.057..0.058 rows=0 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 8kB
+               Buffers: shared hit=4
+               ->  Nested Loop  (cost=9.61..11.82 rows=2 width=573) (actual time=0.057..0.058 rows=0 loops=1)
+                     Buffers: shared hit=4
+                     ->  Hash Join  (cost=9.48..11.40 rows=2 width=61) (actual time=0.057..0.057 rows=0 loops=1)
+                           Hash Cond: (p.patient_id = pr.patient_id)
+                           Buffers: shared hit=4
+                           ->  Seq Scan on patients p  (cost=0.00..1.60 rows=60 width=63) (actual time=0.002..0.002 rows=1 loops=1)
+                                 Buffers: shared hit=1
+                           ->  Hash  (cost=9.45..9.45 rows=2 width=30) (actual time=0.033..0.033 rows=0 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 8kB
+                                 Buffers: shared hit=3
+                                 ->  Hash Join  (cost=4.41..9.45 rows=2 width=30) (actual time=0.033..0.033 rows=0 loops=1)
+                                       Hash Cond: (pi.prescription_id = pr.prescription_id)
+                                       Buffers: shared hit=3
+                                       ->  Seq Scan on prescription_items pi  (cost=0.00..4.39 rows=239 width=30) (actual time=0.002..0.002 rows=1 loops=1)
+                                             Buffers: shared hit=1
+                                       ->  Hash  (cost=4.40..4.40 rows=1 width=32) (actual time=0.017..0.017 rows=0 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 8kB
+                                             Buffers: shared hit=2
+                                             ->  Seq Scan on prescriptions pr  (cost=0.00..4.40 rows=1 width=32) (actual time=0.017..0.017 rows=0 loops=1)
+                                                   Filter: ((start_date <= CURRENT_DATE) AND ((end_date IS NULL) OR (end_date >= CURRENT_DATE)))
+                                                   Rows Removed by Filter: 120
+                                                   Buffers: shared hit=2
+                     ->  Index Scan using drugs_directory_pkey on drugs_directory dr  (cost=0.13..0.20 rows=1 width=520) (never executed)
+                           Index Cond: (drug_id = pi.drug_id)
+ Planning:
+   Buffers: shared hit=550 read=1
+ Planning Time: 3.359 ms
+ Execution Time: 0.220 ms
+(40 rows)
+

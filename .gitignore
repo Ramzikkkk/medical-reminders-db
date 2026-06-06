@@ -3,3 +3,10 @@
 __pycache__/
 *.pyc
 *.pdf
+PLAN.md
+lab2_report.md
+lab2_report.pdf
+lab1_report.pdf
+lab1_report.md
+AI_CONTEXT.md
+.env
