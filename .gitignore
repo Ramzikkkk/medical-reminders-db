@@ -1,12 +1,8 @@
-.env
-.idea/
+.venv/
 __pycache__/
 *.pyc
-*.pdf
-PLAN.md
-lab2_report.md
-lab2_report.pdf
-lab1_report.pdf
-lab1_report.md
+.claude/
+lab4/PLAN.md
+kr/PLAN.md
 AI_CONTEXT.md
 .env
